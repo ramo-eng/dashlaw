@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3000 --hostname localhost",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3000 --hostname localhost",
+    "ensure": "prisma generate && prisma db push",
     "lint": "eslint",
     "test": "vitest run",
     "setup": "prisma generate && prisma db push && prisma db seed"

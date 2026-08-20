@@ -4,17 +4,21 @@ Immigration case-management SaaS for law firms: cases, checklists, client portal
 
 This product is **administrative workflow software**, not legal advice. Eligibility, filing strategy, and representations about government requirements remain under attorney control.
 
-## Quick start
+## Run locally (from Cursor / VS Code)
+
+1. Open this repository folder as the workspace.
+2. Use **Run and Debug** (Ctrl/Cmd+Shift+D) → **DashLaw: Run locally**.
+3. Or **Terminal → Run Task…** → **DashLaw: Start local server**.
+
+The first run installs dependencies, creates `apps/web/.env`, pushes the SQLite database, and seeds demo data if the database is empty. It then serves the app at **http://localhost:3000** and opens the browser when Next.js is ready.
+
+From a terminal in the repo root:
 
 ```bash
-cd apps/web
-cp .env.example .env
-npm install
-npm run setup
-npm run dev
+npm run local
 ```
 
-Open http://localhost:3000
+(`npm run setup` prepares the database without starting the server.)
 
 **Demo staff login:** `admin@harbor.example` / `password123`  
 Also: `attorney@harbor.example`, `paralegal@harbor.example` (same password).

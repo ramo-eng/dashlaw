@@ -1,0 +1,16 @@
+{
+  "name": "dashlaw",
+  "private": true,
+  "description": "Immigration case management SaaS — run locally from the repo root or the IDE.",
+  "scripts": {
+    "setup": "node scripts/local.mjs setup",
+    "dev": "node scripts/local.mjs dev",
+    "local": "node scripts/local.mjs dev",
+    "start": "node scripts/local.mjs start",
+    "test": "npm --prefix apps/web test",
+    "lint": "npm --prefix apps/web run lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "npm.packageManager": "npm",
+  "debug.javascript.autoAttachFilter": "onlyWithFlag",
+  "task.allowAutomaticTasks": "on"
+}
