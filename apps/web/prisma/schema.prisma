@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Firm {
+  id                   String    @id @default(uuid())
+  name                 String
+  timezone             String    @default("America/New_York")
+  planId               String    @default("trial")
+  aiEnabled            Boolean   @default(true)
+  onboardingComplete   Boolean   @default(false)
+  reminderCadenceDays  Int       @default(3)
+  dataRetentionDays    Int       @default(2555)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  users           User[]
+  clients         Client[]
+  cases           Case[]
+  templates       CaseTemplate[]
+  auditEvents     AuditEvent[]
+  subscription    Subscription?
+  notifications   Notification[]
+  analyticsEvents AnalyticsEvent[]
+}
+
+model User {
+  id               String    @id @default(uuid())
+  firmId           String
+  email            String
+  name             String
+  role             String
+  status           String    @default("pending_verification")
+  passwordHash     String
+  emailVerifiedAt  DateTime?
+  mfaEnabled       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  firm             Firm       @relation(fields: [firmId], references: [id])
+  ownedCases       Case[]     @relation("CaseOwner")
+  assignedTasks    Task[]
+  auditEvents      AuditEvent[]
+  notifications    Notification[]
+
+  @@unique([firmId, email])
+  @@index([firmId])
+}
+
+model AuthToken {
+  id        String   @id @default(uuid())
+  purpose   String
+  email     String
+  tokenHash String
+  otpCode   String?
+  payload   String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  firmId    String
+  name      String
+  email     String
+  phone     String?
+  status    String    @default("active")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  firm  Firm   @relation(fields: [firmId], references: [id])
+  cases Case[]
+
+  @@index([firmId])
+  @@index([firmId, email])
+}
+
+model Case {
+  id              String    @id @default(uuid())
+  firmId          String
+  clientId        String
+  ownerId         String
+  title           String
+  caseType        String
+  status          String    @default("Draft")
+  templateId      String?
+  templateVersion Int?
+  version         Int       @default(1)
+  notesInternal   String?
+  nextAction      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  firm            Firm            @relation(fields: [firmId], references: [id])
+  client          Client          @relation(fields: [clientId], references: [id])
+  owner           User            @relation("CaseOwner", fields: [ownerId], references: [id])
+  checklistItems  ChecklistItem[]
+  documents       Document[]
+  intakeResponses IntakeResponse[]
+  tasks           Task[]
+  deadlines       Deadline[]
+  notifications   Notification[]
+  aiSummaries     AISummary[]
+  invites         ClientInvite[]
+
+  @@index([firmId, status])
+  @@index([firmId, clientId])
+}
+
+model CaseTemplate {
+  id               String   @id @default(uuid())
+  firmId           String
+  name             String
+  caseType         String
+  version          Int      @default(1)
+  status           String   @default("draft")
+  reminderDefaults String   @default("{}")
+  familyId         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  publishedAt      DateTime?
+
+  firm      Firm           @relation(fields: [firmId], references: [id])
+  items     TemplateItem[]
+  questions TemplateQuestion[]
+
+  @@index([firmId, caseType, status])
+}
+
+model TemplateItem {
+  id              String  @id @default(uuid())
+  templateId      String
+  title           String
+  required        Boolean @default(true)
+  instructions    String  @default("")
+  allowedTypes    String  @default("pdf,jpg,png")
+  ownerRole       String  @default("client")
+  sortOrder       Int     @default(0)
+  dueOffsetDays   Int     @default(14)
+  expectedSchema  String  @default("[]")
+
+  template CaseTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateQuestion {
+  id         String  @id @default(uuid())
+  templateId String
+  prompt     String
+  fieldKey   String
+  required   Boolean @default(true)
+  inputType  String  @default("text")
+  sortOrder  Int     @default(0)
+
+  template CaseTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model ChecklistItem {
+  id             String    @id @default(uuid())
+  caseId         String
+  templateItemId String?
+  title          String
+  required       Boolean   @default(true)
+  instructions   String    @default("")
+  allowedTypes   String    @default("pdf,jpg,png")
+  ownerRole      String    @default("client")
+  status         String    @default("Not Started")
+  dueAt          DateTime?
+  waiveReason    String?
+  remindersPaused Boolean  @default(false)
+  nextReminderAt DateTime?
+  lastRemindedAt DateTime?
+  expectedSchema String    @default("[]")
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  case      Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@index([caseId, status])
+}
+
+model Document {
+  id            String    @id @default(uuid())
+  caseId        String
+  checklistItemId String?
+  firmId        String
+  originalName  String
+  storageKey    String
+  mimeType      String
+  sizeBytes     Int
+  type          String    @default("unknown")
+  status        String    @default("Uploading")
+  version       Int       @default(1)
+  visibility    String    @default("client")
+  scanStatus    String    @default("pending")
+  scanResult    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  case          Case                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  checklistItem ChecklistItem?      @relation(fields: [checklistItemId], references: [id])
+  extractions   DocumentExtraction[]
+
+  @@index([caseId])
+  @@index([firmId])
+}
+
+model DocumentExtraction {
+  id            String   @id @default(uuid())
+  documentId    String
+  schemaVersion String   @default("v1")
+  confidence    Float
+  payload       String
+  classifier    String?
+  ocrText       String   @default("")
+  needsReview   Boolean  @default(false)
+  error         String?
+  modelVersion  String   @default("heuristic-v1")
+  createdAt     DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model IntakeResponse {
+  id         String   @id @default(uuid())
+  caseId     String
+  questionId String
+  fieldKey   String
+  prompt     String
+  answer     String
+  required   Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, fieldKey])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  caseId      String
+  assigneeId  String?
+  title       String
+  status      String    @default("open")
+  dueAt       DateTime?
+  visibility  String    @default("staff")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  case     Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignee User? @relation(fields: [assigneeId], references: [id])
+
+  @@index([caseId])
+}
+
+model Deadline {
+  id          String    @id @default(uuid())
+  caseId      String
+  title       String
+  type        String
+  dueAt       DateTime
+  source      String    @default("manual")
+  status      String    @default("open")
+  critical    Boolean   @default(false)
+  confirmedAt DateTime?
+  timezone    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, dueAt])
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  firmId        String
+  caseId        String?
+  recipientId   String?
+  recipientEmail String
+  channel       String    @default("email")
+  type          String
+  status        String    @default("queued")
+  subject       String
+  body          String
+  idempotencyKey String   @unique
+  providerResponse String?
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  firm Firm  @relation(fields: [firmId], references: [id])
+  case Case? @relation(fields: [caseId], references: [id])
+  recipient User? @relation(fields: [recipientId], references: [id])
+}
+
+model AISummary {
+  id          String   @id @default(uuid())
+  caseId      String
+  version     Int
+  content     String
+  citations   String
+  status      String   @default("draft")
+  modelVersion String  @default("heuristic-v1")
+  promptVersion String @default("summary-v1")
+  createdById String?
+  reviewedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  firmId     String
+  actorId    String?
+  actorType  String   @default("user")
+  action     String
+  targetType String
+  targetId   String
+  metadata   String   @default("{}")
+  requestId  String?
+  createdAt  DateTime @default(now())
+
+  firm  Firm  @relation(fields: [firmId], references: [id])
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([firmId, createdAt])
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  firmId               String   @unique
+  providerCustomerId   String   @default("demo")
+  plan                 String   @default("trial")
+  status               String   @default("trialing")
+  seats                Int      @default(5)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  firm Firm @relation(fields: [firmId], references: [id])
+}
+
+model ClientInvite {
+  id         String    @id @default(uuid())
+  caseId     String
+  email      String
+  tokenHash  String
+  otpCode    String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model CompletenessResult {
+  id         String   @id @default(uuid())
+  caseId     String
+  itemId     String?
+  findings   String
+  createdAt  DateTime @default(now())
+}
+
+model Job {
+  id         String    @id @default(uuid())
+  type       String
+  payload    String
+  status     String    @default("queued")
+  attempts   Int       @default(0)
+  lastError  String?
+  runAfter   DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  firmId    String?
+  name      String
+  properties String  @default("{}")
+  createdAt DateTime @default(now())
+
+  firm Firm? @relation(fields: [firmId], references: [id])
+}
+
+model IdempotencyKey {
+  id        String   @id
+  response  String
+  createdAt DateTime @default(now())
+}
