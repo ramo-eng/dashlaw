@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f4f4f1;
+  --fg: #1c1c1a;
+  --muted: #5c5c56;
+  --line: #e2e2dc;
+  --card: #ffffff;
+  --navy: #1f3656;
+  --navy-2: #2c4a72;
+  --warn: #8a5a12;
+  --ok: #1f5c3a;
+  --bad: #8a1f1f;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+a { color: var(--navy); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input, select, textarea, button { font: inherit; }
+
+input, select, textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 550; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }

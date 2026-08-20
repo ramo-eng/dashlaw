@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: DashLaw API
+  version: "1.0.0"
+  description: REST API for the immigration case management modular monolith.
+servers:
+  - url: /api/v1
+paths:
+  /cases:
+    get:
+      summary: List/search cases
+    post:
+      summary: Create case
+  /cases/{id}:
+    get:
+      summary: Get case workspace data
+    patch:
+      summary: Update case
+  /cases/{id}/invite-client:
+    post:
+      summary: Invite client
+  /cases/{id}/checklist:
+    get:
+      summary: Get checklist
+  /checklist-items/{id}/request:
+    post:
+      summary: Request item
+  /checklist-items/{id}:
+    patch:
+      summary: Update item status
+  /documents/presign:
+    post:
+      summary: Get upload URL
+  /documents/{id}/complete:
+    post:
+      summary: Finalize upload
+  /documents/{id}:
+    get:
+      summary: Get document metadata
+  /documents/{id}/process:
+    post:
+      summary: Start/retry processing
+  /cases/{id}/ai-summary:
+    post:
+      summary: Generate summary
+  /cases/{id}/deadlines:
+    get:
+      summary: List deadlines
+  /deadlines:
+    post:
+      summary: Create deadline
+  /templates:
+    get:
+      summary: List templates
+    post:
+      summary: Create template
+  /templates/{id}:
+    patch:
+      summary: Update/version template
+  /audit-events:
+    get:
+      summary: Audit log
