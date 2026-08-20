@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireStaffPage } from "@/lib/page-auth";
 import { Badge, Empty, PageTitle, statusTone } from "@/components/ui";
 import { calculateReadiness } from "@/lib/domain/checklist";
+import { containsInsensitive } from "@/lib/search";
 
 export default async function CasesPage({
   searchParams,
@@ -18,9 +19,9 @@ export default async function CasesPage({
       status: sp.status || undefined,
       OR: sp.q
         ? [
-            { title: { contains: sp.q } },
-            { caseType: { contains: sp.q } },
-            { client: { name: { contains: sp.q } } },
+            { title: containsInsensitive(sp.q) },
+            { caseType: containsInsensitive(sp.q) },
+            { client: { name: containsInsensitive(sp.q) } },
           ]
         : undefined,
     },

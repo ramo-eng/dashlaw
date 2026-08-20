@@ -1,10 +1,10 @@
 # Runbooks
 
 ## Database unavailable
-Serve a maintenance page. Jobs remain queued. Restore the latest SQLite/Postgres backup; `prisma migrate deploy`.
+Serve a maintenance page. Jobs remain queued. Restore the latest Supabase backup (Dashboard → Database) or `pg_restore`; then `npx prisma migrate deploy`.
 
 ## Object storage outage
-Reject new uploads with a readable error. Existing metadata remains in the database. Retry `document.scan` after storage recovers.
+Reject new uploads with a readable error. Existing metadata remains in Postgres. Retry `document.scan` after Supabase Storage recovers.
 
 ## Email outage
 Notifications stay `queued`/`sent` via the console provider in development. In production, retry with provider backoff; do not duplicate `idempotencyKey`.

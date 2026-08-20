@@ -103,7 +103,7 @@ async function main() {
   const text = "Name: Wei Chen\nDate of birth: 1992-04-11\nPassport: C12345678\n";
   const buf = Buffer.from(text, "utf8");
   const docId = crypto.randomUUID();
-  const storageKey = await storeOriginal(buf, "passport.txt", docId, 1);
+  const storageKey = await storeOriginal(buf, "passport.txt", docId, 1, "text/plain");
   await prisma.document.create({
     data: {
       id: docId,

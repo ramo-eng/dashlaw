@@ -1,8 +1,5 @@
-import { mkdir, writeFile, readFile } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
-
-const ROOT = path.join(process.cwd(), "storage", "documents");
+import { createServiceClient, documentsBucket, ensureDocumentsBucket, isSupabaseConfigured } from "./supabase";
 
 export function maxUploadBytes() {
   return Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024);
@@ -34,17 +31,40 @@ export function assertAllowedFile(name: string, size: number, declared?: string 
   return mime;
 }
 
-export async function storeOriginal(buffer: Buffer, originalName: string, documentId: string, version: number) {
+export async function storeOriginal(
+  buffer: Buffer,
+  originalName: string,
+  documentId: string,
+  version: number,
+  mimeType?: string | null,
+) {
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase storage is required. Configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+  }
+  await ensureDocumentsBucket();
   const ext = originalName.split(".").pop()?.toLowerCase() || "bin";
   const key = `${documentId}/v${version}.${ext}`;
-  const full = path.join(ROOT, key);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, buffer);
+  const mime = mimeType || inferMime(originalName) || "application/octet-stream";
+  const supabase = createServiceClient();
+  const { error } = await supabase.storage.from(documentsBucket()).upload(key, new Uint8Array(buffer), {
+    contentType: mime,
+    upsert: false,
+  });
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) return key;
+    throw new Error(`Supabase upload failed: ${error.message}`);
+  }
   return key;
 }
 
 export async function readStored(storageKey: string) {
-  return readFile(path.join(ROOT, storageKey));
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase storage is required.");
+  }
+  const supabase = createServiceClient();
+  const { data, error } = await supabase.storage.from(documentsBucket()).download(storageKey);
+  if (error || !data) throw new Error(error?.message || "Document not found in storage");
+  return Buffer.from(await data.arrayBuffer());
 }
 
 export function newDocumentId() {

@@ -1,4 +1,4 @@
-This app is the DashLaw staff + client portal.
+This app is the DashLaw staff + client portal. Data and files live in **Supabase**.
 
 From the **repository root** (recommended):
 

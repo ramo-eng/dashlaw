@@ -1,0 +1,1 @@
+-- Application seed is applied by Prisma (`apps/web/prisma/seed.ts`), not this file.

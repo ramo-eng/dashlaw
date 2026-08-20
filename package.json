@@ -1,7 +1,7 @@
 {
   "name": "dashlaw",
   "private": true,
-  "description": "Immigration case management SaaS — run locally from the repo root or the IDE.",
+  "description": "Immigration case management SaaS on Supabase — run locally from the repo root or the IDE.",
   "scripts": {
     "setup": "node scripts/local.mjs setup",
     "dev": "node scripts/local.mjs dev",

@@ -24,6 +24,7 @@ import { enqueueJob, processDueJobs } from "@/lib/jobs";
 import { refreshCaseProgress, getCaseWorkspace } from "@/lib/workspace";
 import { assertAllowedFile, newDocumentId, storeOriginal, readStored } from "@/lib/storage";
 import { sendEmail } from "@/lib/email";
+import { containsInsensitive } from "@/lib/search";
 import type { StaffRole } from "@/lib/domain/roles";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -363,10 +364,10 @@ async function listCases(ctx: Ctx) {
       status: status || undefined,
       OR: q
         ? [
-            { title: { contains: q } },
-            { caseType: { contains: q } },
-            { client: { name: { contains: q } } },
-            { client: { email: { contains: q } } },
+            { title: containsInsensitive(q) },
+            { caseType: containsInsensitive(q) },
+            { client: { name: containsInsensitive(q) } },
+            { client: { email: containsInsensitive(q) } },
           ]
         : undefined,
     },
@@ -546,7 +547,7 @@ async function uploadDocument(ctx: Ctx) {
     : 0;
   const version = existingCount + 1;
   const id = ctx.body.documentId || newDocumentId();
-  const storageKey = await storeOriginal(buf, filename, id, version);
+  const storageKey = await storeOriginal(buf, filename, id, version, mime);
   const doc = await prisma.document.create({
     data: {
       id,
